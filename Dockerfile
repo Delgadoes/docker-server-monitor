@@ -1,19 +1,17 @@
-FROM python:3.11-slim
+# Usamos una imagen ligera de Python
+FROM python:3.9-slim
 
-# Evitar que Python escriba archivos .pyc en el disco
-ENV PYTHONDONTWRITEBYTECODE=1
-# Evitar que Python almacene en búfer stdout y stderr (útil para ver logs en Docker de inmediato)
-ENV PYTHONUNBUFFERED=1
-
+# Creamos el directorio de trabajo
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copiamos todos nuestros archivos (monitor.py e index.html) al contenedor
+COPY . /app
 
-# Copiar el código del backend y el archivo HTML para el frontend
-COPY monitor.py index.html ./
+# Instalamos el motor web y las herramientas necesarias
+RUN pip install --no-cache-dir fastapi uvicorn requests
 
-# Exponer el puerto en el que corre FastAPI
+# Le decimos al contenedor que abra el puerto 8000 hacia el exterior
 EXPOSE 8000
 
-CMD ["python", "monitor.py"]
+# El nuevo comando de encendido: ejecuta Uvicorn escuchando en todas las interfaces de red
+CMD ["uvicorn", "monitor:app", "--host", "0.0.0.0", "--port", "8000"]
