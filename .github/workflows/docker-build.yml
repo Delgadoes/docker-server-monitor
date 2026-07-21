@@ -1,0 +1,22 @@
+name: Construir Contenedor Docker
+
+# Esto le dice a GitHub que ejecute el trabajo cada vez que hagas un push
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  construccion-automatizada:
+    # GitHub nos prestará un servidor Ubuntu gratuito por unos minutos
+    runs-on: ubuntu-latest
+
+    steps:
+      # Paso 1: Descargar tu código fuente en el servidor de GitHub
+      - name: Clonar el repositorio
+        uses: actions/checkout@v3
+
+      # Paso 2: Ejecutar el comando de Docker usando tu Dockerfile
+      - name: Construir la imagen
+        run: docker build -t app-monitor-test .
