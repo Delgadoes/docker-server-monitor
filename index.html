@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radar de Infraestructura - Monitor de Servidores</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --color-active: #10b981;
+            --color-active-glow: rgba(16, 185, 129, 0.15);
+            --color-active-border: rgba(16, 185, 129, 0.3);
+            --color-caido: #f43f5e;
+            --color-caido-glow: rgba(244, 63, 94, 0.15);
+            --color-caido-border: rgba(244, 63, 94, 0.3);
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+        }
+
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            padding: 40px 20px; 
+            max-width: 800px;
+            margin: auto;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(244, 63, 94, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: var(--color-active);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--color-active);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin: 5px 0 0 0;
+            font-size: 0.95rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        #contenedor-resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tarjeta { 
+            padding: 20px; 
+            border-radius: 12px; 
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tarjeta:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .activo { 
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(16, 185, 129, 0.02) 100%);
+            border-left: 5px solid var(--color-active);
+            border-color: var(--color-active-border) var(--color-active-border) var(--color-active-border) var(--color-active);
+            box-shadow: 0 8px 32px 0 var(--color-active-glow);
+        }
+        
+        .caido { 
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.08) 0%, rgba(244, 63, 94, 0.02) 100%);
+            border-left: 5px solid var(--color-caido);
+            border-color: var(--color-caido-border) var(--color-caido-border) var(--color-caido-border) var(--color-caido);
+            box-shadow: 0 8px 32px 0 var(--color-caido-glow);
+        }
+
+        .server-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .server-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .server-url {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .status-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .activo .status-text {
+            color: var(--color-active);
+        }
+
+        .caido .status-text {
+            color: var(--color-caido);
+        }
+
+        .status-text::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .activo .status-text::after {
+            background-color: var(--color-active);
+            box-shadow: 0 0 8px var(--color-active);
+        }
+
+        .caido .status-text::after {
+            background-color: var(--color-caido);
+            box-shadow: 0 0 8px var(--color-caido);
+        }
+
+        .btn-refresh {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-refresh:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-refresh:active {
+            transform: translateY(0);
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+            font-style: italic;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-msg {
+            background-color: rgba(244, 63, 94, 0.1);
+            border: 1px solid var(--color-caido-border);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            color: var(--color-caido);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h2>Radar de Servidores</h2>
+            <p class="subtitle">Monitoreo en tiempo real de infraestructura web.</p>
+        </div>
+        <button class="btn-refresh" onclick="cargarEstado()">
+            Actualizar
+        </button>
+    </header>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Total</div>
+            <div id="stat-total" class="stat-val">-</div>
+        </div>
+        <div class="stat-card" style="color: var(--color-active);">
+            <div class="stat-label">Activos</div>
+            <div id="stat-active" class="stat-val">-</div>
+        </div>
+        <div class="stat-card" style="color: var(--color-caido);">
+            <div class="stat-label">Caídos</div>
+            <div id="stat-down" class="stat-val">-</div>
+        </div>
+    </div>
+    
+    <div id="contenedor-resultados">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <span>Consultando estado de los servidores...</span>
+        </div>
+    </div>
+
+    <script>
+        function cargarEstado() {
+            const contenedor = document.getElementById('contenedor-resultados');
+            
+            // Mostrar spinner de carga si ya hay contenido
+            if (contenedor.innerHTML.indexOf('loading-spinner') === -1) {
+                contenedor.innerHTML = `
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <span>Actualizando estado...</span>
+                    </div>
+                `;
+            }
+
+            fetch('/api/status')
+                .then(respuesta => respuesta.json())
+                .then(datos => {
+                    contenedor.innerHTML = ''; // Limpiar
+                    
+                    let activos = 0;
+                    let caidos = 0;
+
+                    datos.forEach(sitio => {
+                        const esActivo = sitio.estado === 'Activo';
+                        if (esActivo) activos++; else caidos++;
+
+                        const claseCss = esActivo ? 'activo' : 'caido';
+                        contenedor.innerHTML += `
+                            <div class="tarjeta ${claseCss}">
+                                <div class="server-info">
+                                    <span class="server-name">${sitio.nombre}</span>
+                                    <span class="server-url">${sitio.url}</span>
+                                </div>
+                                <span class="status-text">${sitio.estado}</span>
+                            </div>
+                        `;
+                    });
+
+                    // Actualizar estadísticas
+                    document.getElementById('stat-total').innerText = datos.length;
+                    document.getElementById('stat-active').innerText = activos;
+                    document.getElementById('stat-down').innerText = caidos;
+                })
+                .catch(error => {
+                    contenedor.innerHTML = `
+                        <div class="error-msg">
+                            <strong>Error de conexión:</strong> No se pudo conectar con el motor de monitoreo en Python.
+                        </div>
+                    `;
+                    document.getElementById('stat-total').innerText = 'Error';
+                    document.getElementById('stat-active').innerText = 'Error';
+                    document.getElementById('stat-down').innerText = 'Error';
+                });
+        }
+
+        // Carga inicial
+        cargarEstado();
+
+        // Auto-actualizar cada 30 segundos
+        setInterval(cargarEstado, 30000);
+    </script>
+</body>
+</html>

@@ -10,6 +10,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY monitor.py .
+# Copiar el código del backend y el archivo HTML para el frontend
+COPY monitor.py index.html ./
+
+# Exponer el puerto en el que corre FastAPI
+EXPOSE 8000
 
 CMD ["python", "monitor.py"]
